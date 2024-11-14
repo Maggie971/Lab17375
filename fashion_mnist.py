@@ -35,26 +35,29 @@ y_test_binary = y_test[binary_class_test_indices]
 y_train_binary = np.where(y_train_binary == 0, 0, 1)
 y_test_binary = np.where(y_test_binary == 0, 0, 1)
 
-# 添加L2正则化和Dropout
-l2_reg = tf.keras.regularizers.l2(0.001)  # L2正则化系数
+# 调整超参数：L2正则化、学习率、层数、神经元数量等
+l2_reg = tf.keras.regularizers.l2(0.0005)  # 调整L2正则化系数
+learning_rate = 0.0005  # 调整学习率
 
-# 构建二元分类模型
+# 构建二元分类模型，增加层数和神经元数量
 model = tf.keras.Sequential([
     tf.keras.layers.Flatten(input_shape=(28, 28)),
-    tf.keras.layers.Dense(10, activation='relu', kernel_regularizer=l2_reg),  # 第一层
-    tf.keras.layers.Dense(8, activation='relu', kernel_regularizer=l2_reg),   # 第二层
-    tf.keras.layers.Dense(8, activation='relu', kernel_regularizer=l2_reg),   # 第三层
-    tf.keras.layers.Dense(4, activation='relu', kernel_regularizer=l2_reg),   # 第四层
+    tf.keras.layers.Dense(32, activation='relu', kernel_regularizer=l2_reg),  # 增加神经元数量
+    tf.keras.layers.Dropout(0.3),  # 增加Dropout以防止过拟合
+    tf.keras.layers.Dense(16, activation='tanh', kernel_regularizer=l2_reg),  # 使用不同的激活函数
+    tf.keras.layers.Dropout(0.3),
+    tf.keras.layers.Dense(8, activation='relu', kernel_regularizer=l2_reg),
     tf.keras.layers.Dense(1, activation='sigmoid')  # 输出层，Sigmoid 激活函数
 ])
 
-# 编译模型
-model.compile(optimizer='adam',
+# 编译模型，设置优化器的学习率
+optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
+model.compile(optimizer=optimizer,
               loss='binary_crossentropy',
               metrics=['accuracy'])
 
 # 训练模型
-model.fit(x_train_binary, y_train_binary, epochs=10, validation_data=(x_test_binary, y_test_binary))
+model.fit(x_train_binary, y_train_binary, epochs=15, validation_data=(x_test_binary, y_test_binary))
 
 # 评估模型
 test_loss, test_acc = model.evaluate(x_test_binary, y_test_binary)
